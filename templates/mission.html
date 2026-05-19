@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Mission — Preventable Infectious Diseases{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Mission Statement</span>
+<h1>Data that informs, not persuades.</h1>
+<p class="lead">
+  Vaccination is one of humanity's most effective public-health interventions.
+  Our goal is to make global vaccination and infection data
+  <strong>accessible, unbiased, and easy to interpret</strong> — so informed
+  conversation can replace assumption-based debate.
+</p>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>How this site addresses the social challenge</h2>
+  </div>
+  <ul class="mission-list">
+    <li><strong>Inform</strong>We present WHO data without editorial spin.</li>
+    <li><strong>Compare</strong>By country, region, antigen, year, and economic phase.</li>
+    <li><strong>Discover</strong>Drill from headline numbers down to country-level detail.</li>
+    <li><strong>Respect the data</strong>Anomalies, duplicates and missing values handled transparently.</li>
+  </ul>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Who this site is for</h2>
+    <div class="meta">{{ personas|length }} target personas</div>
+  </div>
+  <div class="persona-grid">
+    {% for p in personas %}
+      <div class="persona">
+        <div class="avatar">{{ p.name[:1] }}</div>
+        <h4>{{ p.name }}</h4>
+        <div class="role">{{ p.role }}</div>
+        <p>{{ p.description }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>The team</h2>
+    <div class="meta">Stored in &amp; retrieved from the database</div>
+  </div>
+  {% for m in team %}
+    <div class="team-card">
+      <div class="avatar">{{ m.name[:1]|upper }}</div>
+      <div>
+        <div class="name">{{ m.name }}</div>
+        <div class="sid">{{ m.student_number }}</div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

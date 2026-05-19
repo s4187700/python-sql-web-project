@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Preventable Infectious Diseases{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <a href="{{ url_for('landing') }}">
+        <span class="logo">⚕</span>
+        <span>
+          Preventable Infectious Diseases
+          <span class="brand-sub">WHO Immunisation Data Explorer</span>
+        </span>
+      </a>
+    </div>
+    <nav>
+      <a href="{{ url_for('landing') }}"             {% if request.endpoint=='landing' %}class="active"{% endif %}>Home</a>
+      <a href="{{ url_for('mission') }}"             {% if request.endpoint=='mission' %}class="active"{% endif %}>Mission</a>
+      <a href="{{ url_for('vaccination_rates') }}"   {% if request.endpoint=='vaccination_rates' %}class="active"{% endif %}>Vaccination Rates</a>
+      <a href="{{ url_for('infection_economy') }}"   {% if request.endpoint=='infection_economy' %}class="active"{% endif %}>Infections × Economy</a>
+      <a href="{{ url_for('biggest_improvement') }}" {% if request.endpoint=='biggest_improvement' %}class="active"{% endif %}>Biggest Improvement</a>
+      <a href="{{ url_for('above_average') }}"       {% if request.endpoint=='above_average' %}class="active"{% endif %}>Above-Average</a>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>
+      Data source · <a href="https://www.who.int/teams/immunization-vaccines-and-biologicals/immunization-analysis-and-insights" target="_blank" rel="noopener">WHO immunisation dataset</a>
+      &nbsp;·&nbsp; COSC3107|3108 Python Programming Studio
+    </p>
+  </footer>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

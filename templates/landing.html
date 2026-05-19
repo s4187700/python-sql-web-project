@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Home — Preventable Infectious Diseases{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <span class="eyebrow">Global Immunisation Insights</span>
+  <h1>Vaccines save lives.<br/>Let the data show you why.</h1>
+  <p class="lead">
+    A clear, unbiased window into 25 years of WHO immunisation data — built for
+    researchers, parents, students, and field workers exploring how vaccination
+    shapes the fight against preventable disease.
+  </p>
+</section>
+
+<div class="cards">
+  <div class="card">
+    <div class="label"><span class="icon">⏱</span> Timeframe</div>
+    <div class="num">{{ year_lo }}<small>–</small>{{ year_hi }}</div>
+    <p>Vaccination &amp; infection records spanning a quarter-century.</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">💉</span> Doses administered</div>
+    <div class="num">{{ total_doses|num }}</div>
+    <p>Across every antigen and country in the dataset.</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">🦠</span> Reported cases</div>
+    <div class="num">{{ total_cases|num }}</div>
+    <p>Worldwide reports of preventable infection.</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">🌍</span> Countries covered</div>
+    <div class="num">{{ n_countries }}</div>
+    <p>From every WHO region — high-income to least-developed.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Diseases tracked</h2>
+    <div class="meta">{{ diseases|length }} infection types</div>
+  </div>
+  <ul class="diseases">
+    {% for d in diseases %}<li>{{ d }}</li>{% endfor %}
+  </ul>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>How to navigate the explorer</h2>
+    <div class="meta">5 analytical views</div>
+  </div>
+  <ul class="how-to">
+    <li><strong>Mission</strong><span>See who this site is built for and meet the team behind it.</span></li>
+    <li><strong>Vaccination Rates</strong><span>Filter coverage by country, region, antigen and year.</span></li>
+    <li><strong>Infections × Economy</strong><span>Compare disease burden across economic phases.</span></li>
+    <li><strong>Biggest Improvement</strong><span>Find countries with the largest gains over time.</span></li>
+    <li><strong>Above-Average</strong><span>Spot nations exceeding the global infection rate.</span></li>
+  </ul>
+</div>
+
+{% endblock %}

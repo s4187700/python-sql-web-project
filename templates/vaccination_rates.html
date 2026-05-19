@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Vaccination Rates{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Level 2 · Shallow Glance</span>
+<h1>Vaccination rates by country &amp; region</h1>
+<p class="lead">
+  Filter coverage data by antigen, year, region and country. Countries meeting the
+  WHO herd-immunity benchmark of <strong>≥ 90 % coverage</strong> are surfaced, and
+  the second table aggregates how many countries reach that bar in each region.
+</p>
+
+<div class="panel">
+  <form class="filters" method="get">
+    <label>Antigen
+      <select name="antigen">
+        {% for a in antigens %}
+          <option value="{{ a.AntigenID }}" {% if a.AntigenID == antigen %}selected{% endif %}>
+            {{ a.AntigenID }} — {{ a.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Year
+      <select name="year">
+        {% for y in years %}<option value="{{ y.YearID }}" {% if y.YearID == year %}selected{% endif %}>{{ y.YearID }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Region
+      <select name="region">
+        <option value="">All regions</option>
+        {% for r in regions %}<option value="{{ r.RegionID }}" {% if r.RegionID == region %}selected{% endif %}>{{ r.region }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Country
+      <select name="country">
+        <option value="">All countries</option>
+        {% for c in countries %}<option value="{{ c.CountryID }}" {% if c.CountryID == country %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sort by
+      <select name="sort_by">
+        <option value="cov_desc"    {% if sort_by=='cov_desc' %}selected{% endif %}>Coverage (high → low)</option>
+        <option value="cov_asc"     {% if sort_by=='cov_asc' %}selected{% endif %}>Coverage (low → high)</option>
+        <option value="country_asc" {% if sort_by=='country_asc' %}selected{% endif %}>Country (A → Z)</option>
+        <option value="region_asc"  {% if sort_by=='region_asc' %}selected{% endif %}>Region</option>
+      </select>
+    </label>
+    <div class="actions"><button type="submit">Apply filters</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Countries meeting ≥ 90 % coverage</h2>
+    <div class="meta">{{ antigen }} · {{ year }} · {{ table1|length }} countries</div>
+  </div>
+  {% if table1 %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Country</th><th>Region</th><th class="num">Coverage</th></tr></thead>
+        <tbody>
+          {% for r in table1 %}
+            <tr>
+              <td><strong>{{ r.country }}</strong></td>
+              <td><span class="badge badge-muted">{{ r.region }}</span></td>
+              <td class="num">
+                <span class="badge {% if r.coverage > 100 %}badge-warn{% else %}badge-good{% endif %}">{{ r.coverage|num(2) }} %</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No countries meet the 90 % threshold for this selection.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Countries meeting ≥ 90 % per region</h2>
+    <div class="meta">Herd-immunity summary by WHO region</div>
+  </div>
+  {% if table2 %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th class="num">Meeting ≥ 90 %</th>
+            <th class="num">Total countries</th>
+            <th class="num">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in table2 %}
+            {% set pct = (r.countries_meeting * 100.0 / r.total_countries) if r.total_countries else 0 %}
+            <tr>
+              <td><strong>{{ r.region }}</strong></td>
+              <td class="num">{{ r.countries_meeting }}</td>
+              <td class="num">{{ r.total_countries }}</td>
+              <td class="num">
+                <span class="badge {% if pct >= 50 %}badge-good{% elif pct >= 25 %}badge-warn{% else %}badge-muted{% endif %}">{{ pct|num(1) }} %</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No region has any country meeting 90 % in this selection.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

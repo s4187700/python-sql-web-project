@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Above-Average Infection Rate{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Level 3 · Deep Dive</span>
+<h1>Countries above the global infection rate</h1>
+<p class="lead">
+  The global reported infection rate per 100,000 is computed in a single SQL
+  statement together with every country that exceeds it. The <strong>Global</strong>
+  row anchors the table; the remaining rows are countries above that benchmark.
+</p>
+
+<div class="panel">
+  <form class="filters" method="get">
+    <label>Infection type
+      <select name="inf_type">
+        {% for i in inf_types %}<option value="{{ i.id }}" {% if i.id == inf_type %}selected{% endif %}>{{ i.description }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Year
+      <select name="year">
+        {% for y in years %}<option value="{{ y.YearID }}" {% if y.YearID == year %}selected{% endif %}>{{ y.YearID }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sort by
+      <select name="sort_by">
+        <option value="rate_desc"   {% if sort_by=='rate_desc' %}selected{% endif %}>Rate (high → low)</option>
+        <option value="rate_asc"    {% if sort_by=='rate_asc' %}selected{% endif %}>Rate (low → high)</option>
+        <option value="country_asc" {% if sort_by=='country_asc' %}selected{% endif %}>Country (A → Z)</option>
+        <option value="similarity"  {% if sort_by=='similarity' %}selected{% endif %}>Closest to global rate</option>
+      </select>
+    </label>
+    <div class="actions"><button type="submit">Apply filters</button></div>
+  </form>
+</div>
+
+{% if global_rate is not none %}
+<div class="cards">
+  <div class="card">
+    <div class="label"><span class="icon">🌐</span> Global rate</div>
+    <div class="num">{{ global_rate|num(2) }}<small> / 100k</small></div>
+    <p>{{ inf_name }} · {{ year }}</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">⚠</span> Above-average countries</div>
+    <div class="num">{{ (rows|length - 1) if rows|length > 0 else 0 }}</div>
+    <p>Exceeding the global benchmark.</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ inf_name }} · {{ year }}</h2>
+    <div class="meta">Global rate anchors the first row</div>
+  </div>
+  {% if global_rate is none %}
+    <p class="empty">No global data for this selection.</p>
+  {% else %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>Infection</th>
+            <th class="num">Cases</th>
+            <th class="num">Population</th>
+            <th class="num">Rate / 100,000</th>
+            <th class="num">vs Global</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            {% set is_global = (r.sort_priority == 0) %}
+            {% set multiplier = (r.rate / global_rate) if global_rate and not is_global else None %}
+            <tr class="{% if is_global %}global-row{% endif %}">
+              <td>
+                {% if is_global %}🌐 <strong>Global</strong>{% else %}<strong>{{ r.country }}</strong>{% endif %}
+              </td>
+              <td><span class="badge badge-muted">{{ inf_name }}</span></td>
+              <td class="num">{{ r.cases|num }}</td>
+              <td class="num">{{ r.population|num }}</td>
+              <td class="num">
+                <span class="badge {% if is_global %}badge-muted{% else %}badge-bad{% endif %}">{{ r.rate|num(2) }}</span>
+              </td>
+              <td class="num">
+                {% if is_global %}—{% else %}<span class="badge badge-warn">×{{ multiplier|num(2) }}</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          {% if rows|length <= 1 %}
+            <tr><td colspan="6" class="empty">No country exceeds the global rate.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

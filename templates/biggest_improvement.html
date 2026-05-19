@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Biggest Vaccination Improvement{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Level 3 · Deep Dive</span>
+<h1>Countries with the biggest vaccination jump</h1>
+<p class="lead">
+  Vaccination rate is computed in SQL as <code>doses ÷ population × 100</code> at
+  your start and end year. Countries are ranked by the size of the jump for the
+  chosen antigen — one query, sorted &amp; limited entirely in the database.
+</p>
+
+<div class="panel">
+  <form class="filters" method="get">
+    <label>Start year
+      <select name="start_year">
+        {% for y in years %}<option value="{{ y.YearID }}" {% if y.YearID == start_year %}selected{% endif %}>{{ y.YearID }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>End year
+      <select name="end_year">
+        {% for y in years %}<option value="{{ y.YearID }}" {% if y.YearID == end_year %}selected{% endif %}>{{ y.YearID }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Antigen
+      <select name="antigen">
+        {% for a in antigens %}<option value="{{ a.AntigenID }}" {% if a.AntigenID == antigen %}selected{% endif %}>{{ a.AntigenID }} — {{ a.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Top N
+      <input type="number" name="top_n" min="1" max="50" value="{{ top_n }}" />
+    </label>
+    <label>Sort by
+      <select name="sort_by">
+        <option value="imp_desc"    {% if sort_by=='imp_desc' %}selected{% endif %}>Improvement (high → low)</option>
+        <option value="imp_asc"     {% if sort_by=='imp_asc' %}selected{% endif %}>Improvement (low → high)</option>
+        <option value="end_desc"    {% if sort_by=='end_desc' %}selected{% endif %}>End rate (high → low)</option>
+        <option value="country_asc" {% if sort_by=='country_asc' %}selected{% endif %}>Country (A → Z)</option>
+      </select>
+    </label>
+    <div class="actions"><button type="submit">Find improvements</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Top {{ top_n }} · {{ antigen }}</h2>
+    <div class="meta">{{ start_year }} → {{ end_year }} · {{ end_year - start_year }} years</div>
+  </div>
+  {% if not valid_range %}
+    <p class="empty">Start year must be earlier than end year.</p>
+  {% elif results %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Country</th>
+            <th class="num">Rate {{ start_year }}</th>
+            <th class="num">Rate {{ end_year }}</th>
+            <th class="num">Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+            <tr>
+              <td><span class="rank {% if loop.index <= 3 %}top{% endif %}">{{ loop.index }}</span></td>
+              <td><strong>{{ r.country }}</strong></td>
+              <td class="num">{{ r.start_rate|num(2) }} %</td>
+              <td class="num">{{ r.end_rate|num(2) }} %</td>
+              <td class="num">
+                <span class="badge {% if r.improvement >= 0 %}badge-good{% else %}badge-bad{% endif %}">
+                  {% if r.improvement >= 0 %}+{% endif %}{{ r.improvement|num(2) }} pp
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No data available for this antigen / year combination.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

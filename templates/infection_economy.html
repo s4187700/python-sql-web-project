@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Infections × Economic Status{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Level 2 · Shallow Glance</span>
+<h1>Infection burden by economic status</h1>
+<p class="lead">
+  Compare disease burden across economies. The first table is country-level detail
+  for a chosen economic phase (cases per 100,000 people). The second aggregates
+  total reported cases across <strong>all four</strong> economic phases — joining
+  infection data, country and economy tables in a single query.
+</p>
+
+<div class="panel">
+  <form class="filters" method="get">
+    <label>Economic phase
+      <select name="economy">
+        {% for e in economies %}<option value="{{ e.economyID }}" {% if e.economyID == economy %}selected{% endif %}>{{ e.phase }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Infection type
+      <select name="inf_type">
+        {% for i in inf_types %}<option value="{{ i.id }}" {% if i.id == inf_type %}selected{% endif %}>{{ i.description }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Year
+      <select name="year">
+        {% for y in years %}<option value="{{ y.YearID }}" {% if y.YearID == year %}selected{% endif %}>{{ y.YearID }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sort by
+      <select name="sort_by">
+        <option value="rate_desc"    {% if sort_by=='rate_desc' %}selected{% endif %}>Rate (high → low)</option>
+        <option value="rate_asc"     {% if sort_by=='rate_asc' %}selected{% endif %}>Rate (low → high)</option>
+        <option value="country_asc"  {% if sort_by=='country_asc' %}selected{% endif %}>Country (A → Z)</option>
+        <option value="country_desc" {% if sort_by=='country_desc' %}selected{% endif %}>Country (Z → A)</option>
+        <option value="cases_desc"   {% if sort_by=='cases_desc' %}selected{% endif %}>Cases (high → low)</option>
+        <option value="cases_asc"    {% if sort_by=='cases_asc' %}selected{% endif %}>Cases (low → high)</option>
+      </select>
+    </label>
+    <div class="actions"><button type="submit">Apply filters</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ inf_name }} · {{ economy_name }}</h2>
+    <div class="meta">{{ year }} · {{ detail|length }} countries reporting</div>
+  </div>
+  {% if detail %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>Economic phase</th>
+            <th class="num">Cases</th>
+            <th class="num">Population</th>
+            <th class="num">Cases / 100,000</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in detail %}
+            <tr>
+              <td><strong>{{ r.country }}</strong></td>
+              <td><span class="badge badge-muted">{{ r.economic_phase }}</span></td>
+              <td class="num">{{ r.cases|num }}</td>
+              <td class="num">{{ r.population|num }}</td>
+              <td class="num"><span class="badge {% if r.rate and r.rate > 10 %}badge-bad{% elif r.rate and r.rate > 1 %}badge-warn{% else %}badge-good{% endif %}">{{ r.rate|num(2) }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No data for this combination.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Total {{ inf_name }} cases by economic phase</h2>
+    <div class="meta">{{ year }} · all four phases combined</div>
+  </div>
+  {% if summary %}
+    {% set total_sum = summary|map(attribute='total_cases')|select|sum %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Economic phase</th>
+            <th class="num">Total cases</th>
+            <th class="num">Countries reporting</th>
+            <th class="num">Share of total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in summary %}
+            {% set pct = (r.total_cases / total_sum * 100) if total_sum and r.total_cases else 0 %}
+            <tr>
+              <td><strong>{{ r.economic_phase }}</strong></td>
+              <td class="num">{{ r.total_cases|num }}</td>
+              <td class="num">{{ r.n_countries }}</td>
+              <td class="num">
+                <span class="badge {% if pct >= 50 %}badge-bad{% elif pct >= 20 %}badge-warn{% else %}badge-muted{% endif %}">{{ pct|num(1) }} %</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No summary data.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
