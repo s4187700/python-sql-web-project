@@ -61,6 +61,41 @@
     });
   }
 
+  /* ---------- Clickable column-header sorting -------------- */
+  // A <th> with data-sort-asc / data-sort-desc maps to the page's existing
+  // server-side `sort_by` values. Clicking it sets the form's sort_by select
+  // and submits — so the actual ordering still happens in SQL.
+  function initHeaderSort() {
+    const form = document.querySelector('form.filters');
+    if (!form) return;
+    const sortSelect = form.querySelector('select[name="sort_by"]');
+    if (!sortSelect) return;
+
+    const current = sortSelect.value;
+
+    document.querySelectorAll('th[data-sort-asc], th[data-sort-desc]').forEach((th) => {
+      const asc = th.getAttribute('data-sort-asc');
+      const desc = th.getAttribute('data-sort-desc');
+      th.classList.add('sortable');
+
+      // Indicate current sort direction with an arrow.
+      if (current && current === asc) th.classList.add('sorted-asc');
+      else if (current && current === desc) th.classList.add('sorted-desc');
+
+      th.addEventListener('click', () => {
+        // Toggle: if already ascending, go descending, otherwise ascending.
+        let next = asc || desc;
+        if (asc && desc) {
+          next = current === asc ? desc : asc;
+        }
+        if (!next) return;
+        sortSelect.value = next;
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+      });
+    });
+  }
+
   /* ---------- Smooth-scroll anchors (defensive) ------------ */
   function initSmoothAnchors() {
     document.querySelectorAll('a[href^="#"]').forEach((a) => {
@@ -80,6 +115,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       initScrollReveal();
       initFormLoading();
+      initHeaderSort();
       initSmoothAnchors();
     });
   } else {

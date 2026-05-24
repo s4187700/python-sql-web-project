@@ -10,6 +10,17 @@
   chosen antigen — one query, sorted &amp; limited entirely in the database.
 </p>
 
+<div class="note">
+  <span class="note-icon">ℹ</span>
+  <span>
+    Rates are derived from reported <strong>doses</strong> against population, so
+    they can read low when a country's dose reporting for that year is incomplete.
+    Years with no reported data for an antigen are excluded rather than counted as
+    zero. A value shown as <code>&lt; 0.01</code> is a real but very small positive
+    figure, not missing data.
+  </span>
+</div>
+
 <div class="panel">
   <form class="filters" method="get">
     <label>Start year
@@ -55,10 +66,10 @@
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Country</th>
+            <th data-sort-asc="country_asc">Country</th>
             <th class="num">Rate {{ start_year }}</th>
-            <th class="num">Rate {{ end_year }}</th>
-            <th class="num">Change</th>
+            <th class="num" data-sort-desc="end_desc">Rate {{ end_year }}</th>
+            <th class="num" data-sort-desc="imp_desc" data-sort-asc="imp_asc">Change<span class="tip-icon" tabindex="0" data-tip="pp = percentage points. The arithmetic difference between the end-year rate and the start-year rate.">?</span></th>
           </tr>
         </thead>
         <tbody>

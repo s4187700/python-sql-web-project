@@ -59,7 +59,8 @@ def landing():
         SELECT
             (SELECT MIN(year) FROM Vaccination)          AS year_lo,
             (SELECT MAX(year) FROM Vaccination)          AS year_hi,
-            (SELECT SUM(doses) FROM Vaccination)         AS total_doses,
+            (SELECT SUM(doses) FROM Vaccination
+                WHERE typeof(doses) = 'real')             AS total_doses,
             (SELECT SUM(cases) FROM InfectionData)       AS total_cases,
             (SELECT COUNT(*) FROM Country)               AS n_countries
     """)[0]
@@ -132,7 +133,7 @@ def vaccination_rates():
         LEFT JOIN Region r   ON r.RegionID  = c.region
         WHERE v.antigen = ?
           AND v.year = ?
-          AND v.coverage IS NOT NULL
+          AND typeof(v.coverage) = 'real'
           {extra}
         GROUP BY c.CountryID
         HAVING AVG(v.coverage) >= 90
@@ -152,7 +153,7 @@ def vaccination_rates():
         LEFT JOIN (
             SELECT country, AVG(coverage) AS cov
             FROM Vaccination
-            WHERE antigen = ? AND year = ? AND coverage IS NOT NULL
+            WHERE antigen = ? AND year = ? AND typeof(coverage) = 'real'
             GROUP BY country
             HAVING AVG(coverage) >= 90
         ) v ON v.country = c.CountryID
@@ -298,7 +299,7 @@ def biggest_improvement():
                   ON p.country = v.country AND p.year = v.year
                 WHERE v.antigen = ?
                   AND v.year = ?
-                  AND v.doses IS NOT NULL
+                  AND typeof(v.doses) = 'real'
                   AND p.population > 0
                 GROUP BY v.country
             ),
@@ -310,7 +311,7 @@ def biggest_improvement():
                   ON p.country = v.country AND p.year = v.year
                 WHERE v.antigen = ?
                   AND v.year = ?
-                  AND v.doses IS NOT NULL
+                  AND typeof(v.doses) = 'real'
                   AND p.population > 0
                 GROUP BY v.country
             )
@@ -675,9 +676,16 @@ def num_filter(v, digits=0):
     if v is None:
         return "—"
     try:
+        f = float(v)
         if digits == 0:
-            return f"{int(round(float(v))):,}"
-        return f"{float(v):,.{digits}f}"
+            return f"{int(round(f)):,}"
+        # A genuinely positive value that would round to all-zeros is shown
+        # as "< 0.01" so it is never mistaken for an exact zero / missing data.
+        if f > 0:
+            threshold = 0.5 / (10 ** digits)
+            if f < threshold:
+                return f"< {threshold:.{digits}f}"
+        return f"{f:,.{digits}f}"
     except (ValueError, TypeError):
         return str(v)
 

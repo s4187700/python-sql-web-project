@@ -5,9 +5,12 @@
 <span class="eyebrow">Level 2 · Shallow Glance</span>
 <h1>Vaccination rates by country &amp; region</h1>
 <p class="lead">
-  Filter coverage data by antigen, year, region and country. Countries meeting the
-  WHO herd-immunity benchmark of <strong>≥ 90 % coverage</strong> are surfaced, and
-  the second table aggregates how many countries reach that bar in each region.
+  Filter coverage data by
+  <span class="tip" tabindex="0" data-tip="An antigen is the component of a vaccine that triggers immunity. Codes like MCV1 (Measles-Containing Vaccine, 1st dose) identify which vaccine and dose the figures refer to.">antigen</span>,
+  year, region and country. Countries meeting the WHO
+  <span class="tip" tabindex="0" data-tip="Herd immunity: when enough of a population is vaccinated (around 90–95% for measles) that the disease can no longer spread easily, protecting those who cannot be vaccinated.">herd-immunity</span>
+  benchmark of <strong>≥ 90 % coverage</strong> are surfaced, and the second table
+  aggregates how many countries reach that bar in each region.
 </p>
 
 <div class="panel">
@@ -58,7 +61,11 @@
   {% if table1 %}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Country</th><th>Region</th><th class="num">Coverage</th></tr></thead>
+        <thead><tr>
+          <th data-sort-asc="country_asc">Country</th>
+          <th data-sort-asc="region_asc">Region</th>
+          <th class="num" data-sort-desc="cov_desc" data-sort-asc="cov_asc">Coverage</th>
+        </tr></thead>
         <tbody>
           {% for r in table1 %}
             <tr>

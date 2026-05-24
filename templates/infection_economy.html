@@ -6,10 +6,21 @@
 <h1>Infection burden by economic status</h1>
 <p class="lead">
   Compare disease burden across economies. The first table is country-level detail
-  for a chosen economic phase (cases per 100,000 people). The second aggregates
-  total reported cases across <strong>all four</strong> economic phases — joining
-  infection data, country and economy tables in a single query.
+  for a chosen economic phase, showing
+  <span class="tip" tabindex="0" data-tip="Cases per 100,000 people normalises raw case counts by population, so a small country and a large one can be compared fairly.">cases per 100,000 people</span>.
+  The second table aggregates total reported cases across <strong>all four</strong>
+  economic phases.
 </p>
+
+<div class="note">
+  <span class="note-icon">ℹ</span>
+  <span>
+    <strong>Both tables update together</strong> when you apply the filters.
+    The first table lists the individual countries inside the economic phase you
+    chose; the second always summarises <em>every</em> economic phase for the same
+    infection and year, so you can see how your selected phase compares to the others.
+  </span>
+</div>
 
 <div class="panel">
   <form class="filters" method="get">
@@ -52,11 +63,11 @@
       <table>
         <thead>
           <tr>
-            <th>Country</th>
+            <th data-sort-asc="country_asc" data-sort-desc="country_desc">Country</th>
             <th>Economic phase</th>
-            <th class="num">Cases</th>
+            <th class="num" data-sort-desc="cases_desc" data-sort-asc="cases_asc">Cases</th>
             <th class="num">Population</th>
-            <th class="num">Cases / 100,000</th>
+            <th class="num" data-sort-desc="rate_desc" data-sort-asc="rate_asc">Cases / 100,000</th>
           </tr>
         </thead>
         <tbody>
