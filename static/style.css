@@ -830,3 +830,151 @@ nav a.active {
   }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ============================================================
+   Survey form
+   ============================================================ */
+.survey-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 380px;
+}
+.field-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.field-hint { font-size: 12.5px; color: var(--muted-2); }
+
+.survey-form input[type="text"],
+.survey-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+  resize: vertical;
+}
+.survey-form input[type="text"]:focus,
+.survey-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.q-block { padding: 14px 0; border-bottom: 1px solid var(--border-soft); }
+.q-block:last-child { border-bottom: none; padding-bottom: 0; }
+.q-text { font-weight: 500; color: var(--ink); margin: 0 0 12px; }
+
+/* Likert row */
+.likert {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.likert-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease), transform 140ms var(--ease);
+  background: var(--surface);
+}
+.likert-opt:hover { border-color: var(--accent); transform: translateY(-1px); }
+.likert-opt input { accent-color: var(--accent); }
+.likert-num { font-weight: 700; font-size: 15px; color: var(--ink); }
+.likert-label { font-size: 11px; color: var(--muted); line-height: 1.25; }
+.likert-opt:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.likert-opt:has(input:checked) .likert-num { color: var(--accent); }
+
+/* Choice (radio list) */
+.choice { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+  background: var(--surface);
+}
+.choice-opt:hover { border-color: var(--accent); }
+.choice-opt input { accent-color: var(--accent); }
+.choice-opt:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.survey-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  padding: 12px 28px;
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 160ms var(--ease), background 160ms var(--ease);
+}
+.btn-primary:hover { background: var(--accent); transform: translateY(-1px); }
+
+.btn-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.btn-link:hover { text-decoration: underline; }
+
+/* Survey detail Q&A list */
+.qa-list { display: flex; flex-direction: column; gap: 4px; }
+.qa-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.qa-item:last-child { border-bottom: none; }
+.qa-question { font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+.qa-answer { color: var(--ink-2); }
+.qa-open {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+.qa-skip { color: var(--muted-2); font-style: italic; font-size: 13.5px; }
+
+@media (max-width: 720px) {
+  .likert { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .likert-label { display: none; }
+}

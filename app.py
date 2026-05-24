@@ -11,7 +11,8 @@ Design rules followed throughout:
   * Single-query design wherever possible (CTEs, sub-queries, UNION ALL).
 """
 import sqlite3
-from flask import Flask, render_template, request, g
+from datetime import datetime, timezone
+from flask import Flask, render_template, request, g, redirect, url_for
 
 DB_PATH = "immunisation.db"
 app = Flask(__name__)
@@ -427,6 +428,244 @@ def above_average():
         inf_types=inf_types, years=years,
         inf_type=inf_type, year=year, sort_by=sort_by,
         rows=rows, global_rate=global_rate, inf_name=inf_name,
+    )
+
+
+# ============================================================
+#  USABILITY SURVEY
+# ============================================================
+#
+# Questions are defined once here and drive the form, the storage,
+# the summary statistics, and the detail view. Each question has:
+#   id     – stable key stored in SurveyAnswer.question_id
+#   text   – the prompt shown to the participant
+#   type   – "likert" (1-5), "choice" (radio), or "open" (free text)
+#   options– choices for "choice" type
+#   section– grouping label for the form
+
+LIKERT_LABELS = {
+    "1": "Strongly disagree", "2": "Disagree", "3": "Neutral",
+    "4": "Agree", "5": "Strongly agree",
+}
+
+SURVEY_QUESTIONS = [
+    # Part A — Usability (Likert)
+    {"id": "q1",  "section": "Usability", "type": "likert",
+     "text": "I understood what the website was about within the first minute."},
+    {"id": "q2",  "section": "Usability", "type": "likert",
+     "text": "It was easy to navigate between the different pages."},
+    {"id": "q3",  "section": "Usability", "type": "likert",
+     "text": "The filters (antigen, year, region, economic phase) were easy to find and use."},
+    {"id": "q4",  "section": "Usability", "type": "likert",
+     "text": "The data in the tables was clear and easy to read."},
+    {"id": "q5",  "section": "Usability", "type": "likert",
+     "text": "I understood what the numbers meant (e.g. \"coverage %\", \"cases per 100,000\")."},
+    {"id": "q6",  "section": "Usability", "type": "likert",
+     "text": "The sorting options worked the way I expected."},
+    {"id": "q7",  "section": "Usability", "type": "likert",
+     "text": "I always knew where I was on the website."},
+    {"id": "q8",  "section": "Usability", "type": "likert",
+     "text": "The visual design (colours, layout, text size) made the information easy to take in."},
+    # Part B — Satisfaction (Likert)
+    {"id": "q9",  "section": "Satisfaction", "type": "likert",
+     "text": "Overall, I found the website easy to use."},
+    {"id": "q10", "section": "Satisfaction", "type": "likert",
+     "text": "I felt confident completing the tasks."},
+    {"id": "q11", "section": "Satisfaction", "type": "likert",
+     "text": "I would trust this website as a source of vaccination information."},
+    {"id": "q12", "section": "Satisfaction", "type": "likert",
+     "text": "I would recommend this website to someone wanting to learn about immunisation data."},
+    {"id": "q13", "section": "Satisfaction", "type": "choice",
+     "text": "Overall, how would you rate your experience using the website?",
+     "options": ["Very poor", "Poor", "Average", "Good", "Excellent"]},
+    # Part C — Open-ended
+    {"id": "q14", "section": "Open feedback", "type": "open",
+     "text": "What did you like most about the website?"},
+    {"id": "q15", "section": "Open feedback", "type": "open",
+     "text": "What did you find most confusing or frustrating, if anything?"},
+    {"id": "q16", "section": "Open feedback", "type": "open",
+     "text": "Was there any task where you weren't sure what to do next? Which one, and why?"},
+    {"id": "q17", "section": "Open feedback", "type": "open",
+     "text": "Was there anything you expected to be able to do but couldn't?"},
+    {"id": "q18", "section": "Open feedback", "type": "open",
+     "text": "If you could change or add ONE thing to improve the website, what would it be?"},
+    {"id": "q19", "section": "Open feedback", "type": "open",
+     "text": "Any other comments?"},
+    # Part D — Context
+    {"id": "q20", "section": "Context", "type": "choice",
+     "text": "How comfortable are you, in general, with using data-heavy websites and dashboards?",
+     "options": ["Not at all", "Slightly", "Moderately", "Very", "Extremely"]},
+]
+
+# Convenience lookups
+QUESTION_BY_ID = {q["id"]: q for q in SURVEY_QUESTIONS}
+LIKERT_IDS = [q["id"] for q in SURVEY_QUESTIONS if q["type"] == "likert"]
+
+
+def survey_sections():
+    """Group questions by section, preserving order."""
+    sections = []
+    seen = {}
+    for q in SURVEY_QUESTIONS:
+        if q["section"] not in seen:
+            seen[q["section"]] = []
+            sections.append((q["section"], seen[q["section"]]))
+        seen[q["section"]].append(q)
+    return sections
+
+
+@app.route("/survey", methods=["GET"])
+def survey():
+    """Render the usability survey form."""
+    submitted = request.args.get("submitted")
+    return render_template(
+        "survey.html",
+        sections=survey_sections(),
+        likert_labels=LIKERT_LABELS,
+        submitted=submitted,
+    )
+
+
+@app.route("/survey", methods=["POST"])
+def survey_submit():
+    """Persist a survey submission and its answers, then redirect."""
+    db = get_db()
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    code = (request.form.get("participant_code") or "").strip() or None
+
+    cur = db.execute(
+        "INSERT INTO SurveySubmission (participant_code, submitted_at) VALUES (?, ?)",
+        (code, now),
+    )
+    submission_id = cur.lastrowid
+
+    # Store one row per answered question (skip blanks).
+    for q in SURVEY_QUESTIONS:
+        value = (request.form.get(q["id"]) or "").strip()
+        if value:
+            db.execute(
+                "INSERT INTO SurveyAnswer (submission_id, question_id, answer_value) "
+                "VALUES (?, ?, ?)",
+                (submission_id, q["id"], value),
+            )
+    db.commit()
+    return redirect(url_for("survey", submitted=1))
+
+
+@app.route("/survey/results")
+def survey_results():
+    """Summary statistics across all submissions + a list of submissions."""
+    total = query("SELECT COUNT(*) AS c FROM SurveySubmission")[0]["c"]
+
+    # Per-Likert-question average + count, computed in SQL.
+    likert_stats = {}
+    if LIKERT_IDS:
+        placeholders = ",".join("?" * len(LIKERT_IDS))
+        rows = query(
+            f"""
+            SELECT question_id,
+                   AVG(CAST(answer_value AS REAL)) AS avg_score,
+                   COUNT(*) AS n
+            FROM SurveyAnswer
+            WHERE question_id IN ({placeholders})
+            GROUP BY question_id
+            """,
+            LIKERT_IDS,
+        )
+        likert_stats = {r["question_id"]: r for r in rows}
+
+    # Build an ordered list of likert summaries for the template.
+    likert_summary = []
+    for qid in LIKERT_IDS:
+        q = QUESTION_BY_ID[qid]
+        stat = likert_stats.get(qid)
+        likert_summary.append({
+            "id": qid,
+            "text": q["text"],
+            "section": q["section"],
+            "avg": stat["avg_score"] if stat else None,
+            "n": stat["n"] if stat else 0,
+        })
+
+    # Overall averages by section (Usability vs Satisfaction).
+    overall_avg = None
+    if likert_summary:
+        scored = [s["avg"] for s in likert_summary if s["avg"] is not None]
+        overall_avg = sum(scored) / len(scored) if scored else None
+
+    # Distribution for the "overall rating" choice question (q13).
+    rating_dist = query(
+        """
+        SELECT answer_value AS label, COUNT(*) AS n
+        FROM SurveyAnswer
+        WHERE question_id = 'q13'
+        GROUP BY answer_value
+        """
+    )
+    rating_map = {r["label"]: r["n"] for r in rating_dist}
+
+    # List of submissions (newest first) with an answered-question count.
+    submissions = query(
+        """
+        SELECT s.submission_id,
+               s.participant_code,
+               s.submitted_at,
+               COUNT(a.answer_id) AS answered
+        FROM SurveySubmission s
+        LEFT JOIN SurveyAnswer a ON a.submission_id = s.submission_id
+        GROUP BY s.submission_id
+        ORDER BY s.submission_id DESC
+        """
+    )
+
+    return render_template(
+        "survey_results.html",
+        total=total,
+        likert_summary=likert_summary,
+        overall_avg=overall_avg,
+        rating_options=QUESTION_BY_ID["q13"]["options"],
+        rating_map=rating_map,
+        submissions=submissions,
+    )
+
+
+@app.route("/survey/results/<int:submission_id>")
+def survey_detail(submission_id):
+    """Full answers for a single submission."""
+    sub = query(
+        "SELECT submission_id, participant_code, submitted_at "
+        "FROM SurveySubmission WHERE submission_id = ?",
+        [submission_id],
+    )
+    if not sub:
+        return render_template("survey_detail.html", submission=None,
+                               answers=[], sections=[]), 404
+
+    raw = query(
+        "SELECT question_id, answer_value FROM SurveyAnswer WHERE submission_id = ?",
+        [submission_id],
+    )
+    answer_map = {r["question_id"]: r["answer_value"] for r in raw}
+
+    # Build per-section answer lists in question order, resolving Likert labels.
+    detail_sections = []
+    for section_name, questions in survey_sections():
+        items = []
+        for q in questions:
+            val = answer_map.get(q["id"])
+            display = val
+            if q["type"] == "likert" and val in LIKERT_LABELS:
+                display = f"{val} — {LIKERT_LABELS[val]}"
+            items.append({
+                "text": q["text"], "type": q["type"],
+                "value": val, "display": display,
+            })
+        detail_sections.append((section_name, items))
+
+    return render_template(
+        "survey_detail.html",
+        submission=sub[0],
+        sections=detail_sections,
     )
 
 

@@ -88,17 +88,22 @@ nguyenhuynh/
 │   ├── vaccination_rates.html                   # Level 2 · Sub-task A
 │   ├── infection_economy.html                   # Level 2 · Sub-task B
 │   ├── biggest_improvement.html                 # Level 3 · Sub-task A
-│   └── above_average.html                       # Level 3 · Sub-task B
+│   ├── above_average.html                       # Level 3 · Sub-task B
+│   ├── survey.html                              # Usability survey form
+│   ├── survey_results.html                      # Survey results summary + submission list
+│   └── survey_detail.html                       # Single survey submission detail
 ├── static/
 │   ├── style.css                                # Design system, animations, skeleton loader
 │   └── app.js                                   # Scroll-reveal observer and form loading state
+├── usability-testing/                           # Usability test materials (PIF, plan, script, survey)
 ├── .gitignore
 └── README.md
 ```
 
-In addition to the tables provided in the WHO dataset, two small tables are
-created in the same SQLite database to support the Level 1 Sub-task B
-requirements:
+In addition to the tables provided in the WHO dataset, a few small tables are
+created in the same SQLite database to support the application.
+
+Level 1 Sub-task B (Mission page):
 
 - **`Persona`** — stores the four target personas displayed on the Mission
   page.
@@ -107,6 +112,16 @@ requirements:
 Both tables are read from the database at render time, satisfying the
 specification that personas and team members must be stored in and retrieved
 from the database.
+
+Usability survey (collected during in-class usability testing):
+
+- **`SurveySubmission`** — one row per participant submission (optional
+  participant code and a timestamp).
+- **`SurveyAnswer`** — one row per answered question, linked to a submission.
+
+The survey is served at `/survey`, an aggregated summary at
+`/survey/results`, and each individual submission at
+`/survey/results/<id>`.
 
 ---
 
@@ -156,6 +171,9 @@ automatically when template or source changes are saved.
 6. **Above-Average** — choose an infection type and year to display the
    global infection rate per 100,000 alongside every country that exceeds
    it. The Global rate anchors the top of the result table.
+7. **Survey** — a usability-test feedback form. Responses are stored in the
+   database; an aggregated summary is available at `/survey/results`, and
+   each individual submission can be viewed in full.
 
 Every results table supports sorting through the **Sort by** filter, with
 the ordering performed in SQL.
@@ -165,12 +183,13 @@ the ordering performed in SQL.
 ## Database notes
 
 The `immunisation.db` file provided in this repository is the original WHO
-immunisation database supplied with the studio brief, extended with the two
-small `Persona` and `TeamMember` tables described above. No other
-modifications have been made to the original schema or data.
+immunisation database supplied with the studio brief, extended with the
+small `Persona`, `TeamMember`, `SurveySubmission` and `SurveyAnswer` tables
+described above. No other modifications have been made to the original schema
+or data.
 
-If those two tables are missing for any reason, they can be re-created by
-running the following snippet once against the database:
+If those tables are missing for any reason, they can be re-created by running
+the following snippet once against the database:
 
 ```python
 import sqlite3
@@ -187,11 +206,23 @@ cur.execute("""CREATE TABLE IF NOT EXISTS TeamMember (
     name TEXT NOT NULL,
     student_number TEXT NOT NULL
 )""")
+cur.execute("""CREATE TABLE IF NOT EXISTS SurveySubmission (
+    submission_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    participant_code TEXT,
+    submitted_at TEXT NOT NULL
+)""")
+cur.execute("""CREATE TABLE IF NOT EXISTS SurveyAnswer (
+    answer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submission_id INTEGER NOT NULL,
+    question_id TEXT NOT NULL,
+    answer_value TEXT,
+    FOREIGN KEY (submission_id) REFERENCES SurveySubmission(submission_id)
+)""")
 conn.commit()
 conn.close()
 ```
 
-The Persona rows and the single TeamMember row are then inserted with
+The `Persona` rows and the single `TeamMember` row are then inserted with
 ordinary `INSERT INTO` statements.
 
 ---

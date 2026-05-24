@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Submission detail{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Usability Testing</span>
+
+{% if submission is none %}
+  <h1>Submission not found</h1>
+  <div class="panel">
+    <p class="empty">
+      No submission with that ID exists.
+      <a href="{{ url_for('survey_results') }}">← Back to results</a>
+    </p>
+  </div>
+{% else %}
+  <h1>Submission #{{ submission.submission_id }}</h1>
+  <p class="lead">
+    {% if submission.participant_code %}
+      Participant <strong>{{ submission.participant_code }}</strong> ·
+    {% else %}
+      Anonymous participant ·
+    {% endif %}
+    submitted {{ submission.submitted_at }} (UTC)
+  </p>
+
+  <p style="margin-top:-12px;">
+    <a class="btn-link" href="{{ url_for('survey_results') }}">← Back to all results</a>
+  </p>
+
+  {% for section_name, items in sections %}
+    <div class="panel">
+      <div class="panel-head"><h2>{{ section_name }}</h2></div>
+      <div class="qa-list">
+        {% for item in items %}
+          <div class="qa-item">
+            <div class="qa-question">{{ item.text }}</div>
+            <div class="qa-answer">
+              {% if item.value %}
+                {% if item.type == 'open' %}
+                  <p class="qa-open">{{ item.display }}</p>
+                {% else %}
+                  <span class="badge badge-good">{{ item.display }}</span>
+                {% endif %}
+              {% else %}
+                <span class="qa-skip">— not answered —</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% endblock %}

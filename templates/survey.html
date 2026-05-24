@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Usability Survey{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Usability Testing</span>
+<h1>Post-test survey</h1>
+<p class="lead">
+  Thank you for completing the tasks. Please answer the questions below based
+  on your experience using the website today. Your responses are anonymous —
+  there are no right or wrong answers.
+</p>
+
+{% if submitted %}
+  <div class="panel" style="border-color: var(--good); background: var(--good-soft);">
+    <h2 style="color: var(--good);">✓ Response recorded</h2>
+    <p style="margin:0;">
+      Your feedback has been saved. Thank you! You can
+      <a href="{{ url_for('survey') }}">submit another response</a> or
+      <a href="{{ url_for('survey_results') }}">view the results summary</a>.
+    </p>
+  </div>
+{% endif %}
+
+<form method="post" action="{{ url_for('survey_submit') }}" class="survey-form">
+
+  <div class="panel">
+    <div class="panel-head"><h2>Participant</h2></div>
+    <label class="field">
+      <span class="field-label">Participant code (optional)</span>
+      <input type="text" name="participant_code" placeholder="e.g. P1" maxlength="40" />
+      <span class="field-hint">Leave blank to stay fully anonymous.</span>
+    </label>
+  </div>
+
+  {% for section_name, questions in sections %}
+    <div class="panel">
+      <div class="panel-head"><h2>{{ section_name }}</h2></div>
+
+      {% for q in questions %}
+        <div class="q-block">
+          <p class="q-text">{{ q.text }}</p>
+
+          {% if q.type == 'likert' %}
+            <div class="likert">
+              {% for value, label in likert_labels.items() %}
+                <label class="likert-opt">
+                  <input type="radio" name="{{ q.id }}" value="{{ value }}" />
+                  <span class="likert-num">{{ value }}</span>
+                  <span class="likert-label">{{ label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+          {% elif q.type == 'choice' %}
+            <div class="choice">
+              {% for opt in q.options %}
+                <label class="choice-opt">
+                  <input type="radio" name="{{ q.id }}" value="{{ opt }}" />
+                  <span>{{ opt }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+          {% else %}
+            <textarea name="{{ q.id }}" rows="3" placeholder="Your answer…"></textarea>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="panel survey-submit">
+    <p class="field-hint" style="margin:0;">All questions are optional. Submit whatever you're comfortable sharing.</p>
+    <button type="submit" class="btn-primary">Submit response</button>
+  </div>
+</form>
+
+{% endblock %}

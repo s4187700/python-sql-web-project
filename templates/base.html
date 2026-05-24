@@ -26,6 +26,7 @@
       <a href="{{ url_for('infection_economy') }}"   {% if request.endpoint=='infection_economy' %}class="active"{% endif %}>Infections × Economy</a>
       <a href="{{ url_for('biggest_improvement') }}" {% if request.endpoint=='biggest_improvement' %}class="active"{% endif %}>Biggest Improvement</a>
       <a href="{{ url_for('above_average') }}"       {% if request.endpoint=='above_average' %}class="active"{% endif %}>Above-Average</a>
+      <a href="{{ url_for('survey') }}"              {% if request.endpoint in ['survey','survey_results','survey_detail'] %}class="active"{% endif %}>Survey</a>
     </nav>
   </header>
 

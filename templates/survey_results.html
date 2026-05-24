@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Survey Results{% endblock %}
+{% block content %}
+
+<span class="eyebrow">Usability Testing</span>
+<h1>Survey results</h1>
+<p class="lead">
+  Aggregated feedback from all usability-test participants. Likert questions
+  are scored 1 (strongly disagree) to 5 (strongly agree).
+</p>
+
+<div class="cards">
+  <div class="card">
+    <div class="label"><span class="icon">🧑‍🤝‍🧑</span> Responses</div>
+    <div class="num">{{ total }}</div>
+    <p>Total submissions collected.</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">⭐</span> Overall Likert average</div>
+    <div class="num">{% if overall_avg is not none %}{{ overall_avg|num(2) }}<small> / 5</small>{% else %}—{% endif %}</div>
+    <p>Mean across all rating statements.</p>
+  </div>
+  <div class="card">
+    <div class="label"><span class="icon">📊</span> Likert questions</div>
+    <div class="num">{{ likert_summary|length }}</div>
+    <p>Usability + satisfaction statements.</p>
+  </div>
+</div>
+
+{% if total == 0 %}
+  <div class="panel">
+    <p class="empty">No responses yet. Once participants submit the
+      <a href="{{ url_for('survey') }}">survey</a>, results will appear here.</p>
+  </div>
+{% else %}
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Average score per statement</h2>
+      <div class="meta">Scored 1–5 · higher is better</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Statement</th>
+            <th>Section</th>
+            <th class="num">Responses</th>
+            <th class="num">Average</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in likert_summary %}
+            <tr>
+              <td>{{ s.text }}</td>
+              <td><span class="badge badge-muted">{{ s.section }}</span></td>
+              <td class="num">{{ s.n }}</td>
+              <td class="num">
+                {% if s.avg is not none %}
+                  <span class="badge {% if s.avg >= 4 %}badge-good{% elif s.avg >= 3 %}badge-warn{% else %}badge-bad{% endif %}">{{ s.avg|num(2) }}</span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Overall experience rating</h2>
+      <div class="meta">Distribution of responses</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rating</th><th class="num">Responses</th></tr></thead>
+        <tbody>
+          {% for opt in rating_options %}
+            <tr>
+              <td>{{ opt }}</td>
+              <td class="num">{{ rating_map.get(opt, 0) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>All submissions</h2>
+      <div class="meta">{{ submissions|length }} responses · newest first</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Participant code</th>
+            <th>Submitted (UTC)</th>
+            <th class="num">Answers</th>
+            <th class="num">View</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in submissions %}
+            <tr>
+              <td class="num">{{ sub.submission_id }}</td>
+              <td>{{ sub.participant_code or '(anonymous)' }}</td>
+              <td>{{ sub.submitted_at }}</td>
+              <td class="num">{{ sub.answered }}</td>
+              <td class="num">
+                <a class="btn-link" href="{{ url_for('survey_detail', submission_id=sub.submission_id) }}">View →</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% endif %}
+
+{% endblock %}
